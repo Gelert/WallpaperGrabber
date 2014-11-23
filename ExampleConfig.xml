@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8" ?> 
+<config>
+  <ImgurInfo>
+    <ClientId>11111111</ClientId>  
+  </ImgurInfo>
+  
+  <ClientInfo>
+    <WallpaperFolder>C:\Users\UserName\Desktop\Wallpapers</WallpaperFolder>
+    <Subreddit>EarthPorn</Subreddit>
+    <NumberOfImages>10</NumberOfImages>
+    <ScreenWidth>1440</ScreenWidth>
+    <ScreenHeight>900</ScreenHeight>
+  </ClientInfo>
+</config>
