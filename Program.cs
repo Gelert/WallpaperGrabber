@@ -10,7 +10,7 @@ namespace WallpaperGrabber
     {
         public static int Main(string[] args)
         {
-            if(CheckOperatingSystem())
+            if(!CheckOperatingSystem())
             {
                 Console.WriteLine("OS needs to be of version Windows 7 or later.");
                 return -1;
@@ -52,7 +52,7 @@ namespace WallpaperGrabber
         // Windows OS' pre-7 do not have slideshow desktop background functionality!
         private static bool CheckOperatingSystem()
         {
-            return (Environment.Version.Major >= 6 && Environment.Version.Minor > 0) 
+            return (Environment.OSVersion.Version.Major >= 6 && Environment.OSVersion.Version.Minor > 0) 
                 ? true 
                 : false; 
         }
