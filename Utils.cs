@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.IO.Compression;
 using System.Net;
 using System.Xml;
-using Newtonsoft.Json;
 
 namespace WallpaperGrabber
 {
@@ -101,6 +102,14 @@ namespace WallpaperGrabber
                 Console.WriteLine("Downloading " + url);
                 return webClient.DownloadData(url);
             }
+        }
+
+        public static void BackupImages(string wallpaperDirectory, string targetDirectory)
+        {
+            var archiveName = 
+                String.Format(@"{0}\{1}.zip", targetDirectory, DateTime.Now.Ticks);
+
+            ZipFile.CreateFromDirectory(wallpaperDirectory, archiveName);
         }
 
         public static void SaveImageAsJpg(byte[] pixelData, string wallpaperLocation, string fileName)

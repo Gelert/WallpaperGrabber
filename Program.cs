@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
-using System.Net;
 
 namespace WallpaperGrabber
 {
@@ -16,16 +14,39 @@ namespace WallpaperGrabber
                 return -1;
             }
 
-            if(args.Length == 1 && !CheckConfigExists(args[0]))
+            var argsDic = SplitArgs(args);
+
+            if(!argsDic.ContainsKey("ConfigFile"))
             {
-                Console.WriteLine("Usage WallpaperGrabber.exe {config}");
-                Console.WriteLine("Example: WallpaperGrabber.exe ExampleConfig.xml");
-                Console.WriteLine("Make sure config exists.");
+                Console.WriteLine("Usage WallpaperGrabber.exe -ConfigFile {config} -Backup {backup dir}");
+                Console.WriteLine(@"Example: WallpaperGrabber.exe -ConfigFile ExampleConfig.xml -Backup 'C:\Users\User\Desktop'");
             }
 
-            var clientInfo = Utils.GetClientInfo(args[0]);
+            if(!File.Exists(argsDic["ConfigFile"]))
+            {
+                Console.WriteLine("Config file not found");
+            }
 
+            
+            var clientInfo = Utils.GetClientInfo(argsDic["ConfigFile"]);
             var clientId = "Client-ID " + clientInfo.ClientId;
+
+            if(argsDic.ContainsKey("Backup"))
+            {
+                if (argsDic["Backup"] == clientInfo.WallpaperFolder)
+                {
+                    Console.WriteLine("Cannot zip to the same folder you're zipping from!");
+                    return -1;
+                }
+
+                if(!Directory.Exists(argsDic["Backup"]))
+                {
+                    Console.WriteLine("{0} directory does not exist.", argsDic["Backup"]);
+                    return -1;
+                }
+
+                Utils.BackupImages(clientInfo.WallpaperFolder, argsDic["Backup"]);
+            }
 
             var links = Utils.FetchImageUrls(clientId, clientInfo.Subreddit, 
                 clientInfo.NumberOfImages, clientInfo.ScreenWidth, clientInfo.ScreenHeight);
@@ -55,6 +76,22 @@ namespace WallpaperGrabber
             return (Environment.OSVersion.Version.Major >= 6 && Environment.OSVersion.Version.Minor > 0) 
                 ? true 
                 : false; 
+        }
+
+        private static Dictionary<string, string> SplitArgs(string[] args)
+        {
+            var argsDictionary = new Dictionary<string, string>();
+
+            for(int i = 0; i < args.Length; i++)
+            {
+                if (i % 2 == 0)
+                {
+                    var key = args[i].Substring(1, args[i].Length - 1);
+                    argsDictionary[key] = args[i + 1];
+                }
+            }
+
+            return argsDictionary;
         }
     }
 }
