@@ -10,7 +10,7 @@ namespace WallpaperGrabber
 {
     public static class Utils
     {
-        public static IEnumerable<string> GrabImageData(string clientId, string subreddit, 
+        public static IEnumerable<string> FetchImageUrls(string clientId, string subreddit, 
             int imageCount, int screenWidth, int screenHeight)
         {
             var links = new List<string>();
@@ -20,10 +20,14 @@ namespace WallpaperGrabber
                 var webRequest = (HttpWebRequest)WebRequest.Create(subreddit);
                 webRequest.Headers.Add("Authorization", clientId);
 
-                 var response = webRequest.GetResponse().GetResponseStream();
-                 var reader = new StreamReader(response);
-
-                 links = (List<string>)GetLinks(reader.ReadToEnd(), imageCount, screenWidth, screenHeight);
+                using(var response = webRequest.GetResponse().GetResponseStream())
+                {
+                    using(var reader = new StreamReader(response))
+                    {
+                        links = (List<string>)GetImageUrls(reader.ReadToEnd(), imageCount, 
+                            screenWidth, screenHeight);
+                    }
+                }
             }
             catch(WebException we)
             {
@@ -37,7 +41,7 @@ namespace WallpaperGrabber
             return links;
         }
 
-        private static IEnumerable<string> GetLinks(string rawJson, int imageCount,
+        private static IEnumerable<string> GetImageUrls(string rawJson, int imageCount,
             int screenWidth, int screenHeight)
         {
             dynamic parsedJson = JsonConvert.DeserializeObject(rawJson);
@@ -78,19 +82,19 @@ namespace WallpaperGrabber
             };
         }
 
-        public static List<byte[]> GetImagesFromUrls(IEnumerable<string> urls)
+        public static List<byte[]> DownloadImages(IEnumerable<string> urls)
         {
             var imagesInBytes = new List<byte[]>();
 
             foreach (var url in urls)
             {
-                imagesInBytes.Add(GetImageFromUrl(url));
+                imagesInBytes.Add(DownloadImage(url));
             }
 
             return imagesInBytes;
         }
 
-        public static byte[] GetImageFromUrl(string url)
+        public static byte[] DownloadImage(string url)
         {
             using (var webClient = new WebClient())
             {

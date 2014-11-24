@@ -10,13 +10,13 @@ namespace WallpaperGrabber
     {
         public static int Main(string[] args)
         {
-            if(!CheckOperatingSystem())
+            if(!CheckOperatingSystemIsValid())
             {
                 Console.WriteLine("OS needs to be of version Windows 7 or later.");
                 return -1;
             }
 
-            if(args.Length == 1 && !CheckConfig(args[0]))
+            if(args.Length == 1 && !CheckConfigExists(args[0]))
             {
                 Console.WriteLine("Usage WallpaperGrabber.exe {config}");
                 Console.WriteLine("Example: WallpaperGrabber.exe ExampleConfig.xml");
@@ -27,10 +27,10 @@ namespace WallpaperGrabber
 
             var clientId = "Client-ID " + clientInfo.ClientId;
 
-            var links = Utils.GrabImageData(clientId, clientInfo.Subreddit, 
+            var links = Utils.FetchImageUrls(clientId, clientInfo.Subreddit, 
                 clientInfo.NumberOfImages, clientInfo.ScreenWidth, clientInfo.ScreenHeight);
 
-            var bytes = Utils.GetImagesFromUrls(links);
+            var bytes = Utils.DownloadImages(links);
 
             int imageCount = 0;
 
@@ -44,13 +44,13 @@ namespace WallpaperGrabber
             return 0;
         }
 
-        private static bool CheckConfig(string configUri)
+        private static bool CheckConfigExists(string configUri)
         {
             return File.Exists(configUri);
         }
 
         // Windows OS' pre-7 do not have slideshow desktop background functionality!
-        private static bool CheckOperatingSystem()
+        private static bool CheckOperatingSystemIsValid()
         {
             return (Environment.OSVersion.Version.Major >= 6 && Environment.OSVersion.Version.Minor > 0) 
                 ? true 
