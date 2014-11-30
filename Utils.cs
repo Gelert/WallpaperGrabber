@@ -4,39 +4,46 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Net;
-using System.Xml;
 
 namespace WallpaperGrabber
 {
     public static class Utils
     {
-        public static IEnumerable<string> FetchImageUrls(string clientId, string subreddit, 
+        private const string Tag = "wallpaper_grabber_";
+
+        public static IEnumerable<string> FetchImageUrls(string clientId,  IEnumerator<string> subreddit, 
             int imageCount, int screenWidth, int screenHeight)
         {
             var links = new List<string>();
-
             try
             {
-                var webRequest = (HttpWebRequest)WebRequest.Create(subreddit);
-                webRequest.Headers.Add("Authorization", clientId);
-
-                using(var response = webRequest.GetResponse().GetResponseStream())
+                while (subreddit.MoveNext() != false)
                 {
-                    using(var reader = new StreamReader(response))
+                    var webRequest = (HttpWebRequest)WebRequest.Create(subreddit.Current);
+                    webRequest.Headers.Add("Authorization", clientId);
+                    using (var response = webRequest.GetResponse().GetResponseStream())
                     {
-                        links = (List<string>)GetImageUrls(reader.ReadToEnd(), imageCount, 
-                            screenWidth, screenHeight);
+                        using (var reader = new StreamReader(response))
+                        {
+                            var imagesFromThisSubreddit = GetRandomNumber(imageCount);
+                            imageCount -= imagesFromThisSubreddit;
+
+                            foreach(var url in GetImageUrls(reader.ReadToEnd(), imagesFromThisSubreddit, 
+                                screenWidth, screenHeight))
+                                links.Add(url); 
+                        }
                     }
                 }
             }
             catch(WebException we)
             {
-                Console.WriteLine(we.InnerException);
+                Console.WriteLine(we);
             }
             catch(ArgumentNullException ane)
             {
-                Console.WriteLine(ane.InnerException);
+                Console.WriteLine(ane);
             }
             
             return links;
@@ -46,9 +53,7 @@ namespace WallpaperGrabber
             int screenWidth, int screenHeight)
         {
             dynamic parsedJson = JsonConvert.DeserializeObject(rawJson);
-
             var count = 0;
-            var list = new List<string>();
 
             foreach (var image in parsedJson.data)
             {
@@ -60,27 +65,9 @@ namespace WallpaperGrabber
                 if ((height >= screenHeight && width >= screenWidth) && width > height)
                 {
                     count++;
-                    list.Add((string)image.link);
+                    yield return image.link.ToString();
                 }
             }
-
-            return list;
-        }
-
-        public static ClientInfo GetClientInfo(string configUri)
-        {
-            var config = new XmlDocument();
-            config.Load(configUri);
-
-            return new ClientInfo 
-            {
-                ClientId = config.GetElementsByTagName("ClientId")[0].InnerText,
-                WallpaperFolder = config.GetElementsByTagName("WallpaperFolder")[0].InnerText,
-                Subreddit = config.GetElementsByTagName("Subreddit")[0].InnerText,
-                NumberOfImages = int.Parse(config.GetElementsByTagName("NumberOfImages")[0].InnerText),
-                ScreenWidth = int.Parse(config.GetElementsByTagName("ScreenWidth")[0].InnerText),
-                ScreenHeight = int.Parse(config.GetElementsByTagName("ScreenHeight")[0].InnerText)
-            };
         }
 
         public static List<byte[]> DownloadImages(IEnumerable<string> urls)
@@ -88,9 +75,7 @@ namespace WallpaperGrabber
             var imagesInBytes = new List<byte[]>();
 
             foreach (var url in urls)
-            {
                 imagesInBytes.Add(DownloadImage(url));
-            }
 
             return imagesInBytes;
         }
@@ -107,7 +92,7 @@ namespace WallpaperGrabber
         public static void BackupImages(string wallpaperDirectory, string targetDirectory)
         {
             var archiveName = 
-                String.Format(@"{0}\{1}.zip", targetDirectory, DateTime.Now.Ticks);
+                String.Format(@"{0}\{1}{2}.zip", targetDirectory, Tag, DateTime.Now.Ticks);
 
             ZipFile.CreateFromDirectory(wallpaperDirectory, archiveName);
         }
@@ -121,6 +106,21 @@ namespace WallpaperGrabber
                 Console.WriteLine("Saving {0}", saveLocation);
                 image.Save(saveLocation);
             }
+        }
+
+        public static void DeleteOldArchives(string targetDirectory)
+        {
+            var archiveFolder = new DirectoryInfo(targetDirectory);
+
+            archiveFolder.GetFiles(String.Format("{0}*.zip", Tag))
+                .Where(f => f.CreationTime > DateTime.Now.AddDays(-7))
+                .ToList()
+                .ForEach(f => File.Delete(f.FullName));                
+        }
+
+        public static int GetRandomNumber(int upperBound)
+        {
+            return new Random().Next(upperBound);
         }
     }
 }

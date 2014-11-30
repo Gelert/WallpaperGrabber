@@ -26,9 +26,8 @@ namespace WallpaperGrabber
             {
                 Console.WriteLine("Config file not found");
             }
-
             
-            var clientInfo = Utils.GetClientInfo(argsDic["ConfigFile"]);
+            var clientInfo = new ClientInfo(argsDic["ConfigFile"]);
             var clientId = "Client-ID " + clientInfo.ClientId;
 
             if(argsDic.ContainsKey("Backup"))
@@ -45,10 +44,11 @@ namespace WallpaperGrabber
                     return -1;
                 }
 
+                //Utils.DeleteOldArchives(argsDic["Backup"]);
                 Utils.BackupImages(clientInfo.WallpaperFolder, argsDic["Backup"]);
             }
 
-            var links = Utils.FetchImageUrls(clientId, clientInfo.Subreddit, 
+            var links = Utils.FetchImageUrls(clientId, clientInfo.GetSubredditEnumerator(),
                 clientInfo.NumberOfImages, clientInfo.ScreenWidth, clientInfo.ScreenHeight);
 
             var bytes = Utils.DownloadImages(links);
@@ -65,15 +65,11 @@ namespace WallpaperGrabber
             return 0;
         }
 
-        private static bool CheckConfigExists(string configUri)
-        {
-            return File.Exists(configUri);
-        }
-
         // Windows OS' pre-7 do not have slideshow desktop background functionality!
         private static bool CheckOperatingSystemIsValid()
         {
-            return (Environment.OSVersion.Version.Major >= 6 && Environment.OSVersion.Version.Minor > 0) 
+            return (Environment.OSVersion.Version.Major >= 6 
+                && Environment.OSVersion.Version.Minor > 0) 
                 ? true 
                 : false; 
         }
