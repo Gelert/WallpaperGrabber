@@ -19,7 +19,7 @@ namespace WallpaperGrabber
             var links = new List<string>();
             try
             {
-                while (subreddit.MoveNext() != false)
+                while (subreddit.MoveNext())
                 {
                     var webRequest = (HttpWebRequest)WebRequest.Create(subreddit.Current);
                     webRequest.Headers.Add("Authorization", clientId);
@@ -27,12 +27,11 @@ namespace WallpaperGrabber
                     {
                         using (var reader = new StreamReader(response))
                         {
-                            var imagesFromThisSubreddit = GetRandomNumber(imageCount);
-                            imageCount -= imagesFromThisSubreddit;
+                            var imageUrls = 
+                                GetImageUrls(reader.ReadToEnd(), imageCount, screenWidth, screenHeight);
 
-                            foreach(var url in GetImageUrls(reader.ReadToEnd(), imagesFromThisSubreddit, 
-                                screenWidth, screenHeight))
-                                links.Add(url); 
+                            foreach (var url in imageUrls)
+                                links.Add(url);
                         }
                     }
                 }
@@ -116,11 +115,6 @@ namespace WallpaperGrabber
                 .Where(f => f.CreationTime > DateTime.Now.AddDays(-7))
                 .ToList()
                 .ForEach(f => File.Delete(f.FullName));                
-        }
-
-        public static int GetRandomNumber(int upperBound)
-        {
-            return new Random().Next(upperBound);
         }
     }
 }

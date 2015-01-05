@@ -24,7 +24,7 @@ namespace WallpaperGrabber
 
             if(!File.Exists(argsDic["ConfigFile"]))
             {
-                Console.WriteLine("Config file not found");
+                Console.WriteLine("Config files not found");
             }
             
             var clientInfo = new ClientInfo(argsDic["ConfigFile"]);
@@ -68,10 +68,8 @@ namespace WallpaperGrabber
         // Windows OS' pre-7 do not have slideshow desktop background functionality!
         private static bool CheckOperatingSystemIsValid()
         {
-            return (Environment.OSVersion.Version.Major >= 6 
-                && Environment.OSVersion.Version.Minor > 0) 
-                ? true 
-                : false; 
+            return (Environment.OSVersion.Version.Major >= 6
+                && Environment.OSVersion.Version.Minor > 0);
         }
 
         private static Dictionary<string, string> SplitArgs(string[] args)
