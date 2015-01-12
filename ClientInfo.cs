@@ -11,6 +11,7 @@ namespace WallpaperGrabber
         public int ScreenHeight { get; set; }
         public int NumberOfImages { get; set; }
         public string ClientId { get; set; }
+        public string BackupLocation { get; set; }
 
         private string _wallpaperFolder;
         public string WallpaperFolder 
@@ -38,10 +39,16 @@ namespace WallpaperGrabber
             config.Load(configUri);
 
             ClientId = config.GetElementsByTagName("ClientId")[0].InnerText;
-            WallpaperFolder = config.GetElementsByTagName("WallpaperFolder")[0].InnerText;         
+            WallpaperFolder = config.GetElementsByTagName("WallpaperDirectory")[0].InnerText;         
             NumberOfImages = int.Parse(config.GetElementsByTagName("NumberOfImages")[0].InnerText);
             ScreenWidth = int.Parse(config.GetElementsByTagName("ScreenWidth")[0].InnerText);
             ScreenHeight = int.Parse(config.GetElementsByTagName("ScreenHeight")[0].InnerText);
+
+            var backupLocation = config.GetElementsByTagName("BackupDirectory");
+            BackupLocation = backupLocation.Count > 0
+                ? backupLocation[0].InnerText
+                : "";
+            
             var subreddits = config.GetElementsByTagName("Subreddit");
 
             for (var i = 0; i < subreddits.Count; i++)

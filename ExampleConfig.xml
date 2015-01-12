@@ -5,9 +5,13 @@
   </ImgurInfo>
   
   <ClientInfo>
-    <WallpaperFolder>C:\Users\UserName\Desktop\Wallpapers</WallpaperFolder>
-    <Subreddit>EarthPorn</Subreddit>
-    <NumberOfImages>10</NumberOfImages>
+    <BackupDirectory>C:\Users\user\Desktop\WallpaperBackups</BackupDirectory>
+    <WallpaperDirectory>C:\Users\user\Desktop\Wallpapers</WallpaperDirectory>
+	  <Subreddits>
+		  <Subreddit>EarthPorn</Subreddit>
+		  <Subreddit>CityPorn</Subreddit>
+	  </Subreddits>
+    <NumberOfImages>20</NumberOfImages>
     <ScreenWidth>1440</ScreenWidth>
     <ScreenHeight>900</ScreenHeight>
   </ClientInfo>

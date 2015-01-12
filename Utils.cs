@@ -90,6 +90,8 @@ namespace WallpaperGrabber
 
         public static void BackupImages(string wallpaperDirectory, string targetDirectory)
         {
+            Console.WriteLine("Archiving old images...");
+
             var archiveName = 
                 String.Format(@"{0}\{1}{2}.zip", targetDirectory, Tag, DateTime.Now.Ticks);
 
@@ -115,6 +117,16 @@ namespace WallpaperGrabber
                 .Where(f => f.CreationTime > DateTime.Now.AddDays(-7))
                 .ToList()
                 .ForEach(f => File.Delete(f.FullName));                
+        }
+
+        public static void DeleteFiles(string directoryPath)
+        {
+            var files = new DirectoryInfo(directoryPath).EnumerateFiles();
+            foreach(var file in files)
+            {
+                Console.WriteLine("Deleting {0}", file.FullName);
+                File.Delete(file.FullName);
+            }
         }
     }
 }

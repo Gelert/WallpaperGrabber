@@ -14,48 +14,40 @@ namespace WallpaperGrabber
                 return -1;
             }
 
-            var argsDic = SplitArgs(args);
+            var configFilePath = GetConfigPath(args);
 
-            if(!argsDic.ContainsKey("ConfigFile"))
+            if(String.IsNullOrEmpty(configFilePath))
             {
-                Console.WriteLine("Usage WallpaperGrabber.exe -ConfigFile {config} -Backup {backup dir}");
-                Console.WriteLine(@"Example: WallpaperGrabber.exe -ConfigFile ExampleConfig.xml -Backup 'C:\Users\User\Desktop'");
+                Console.WriteLine(@"Usage: wallpapergrabber.exe -ConfigFile C:\Users\User\Desktop\Folder");
+                Console.WriteLine("Command line switches are case sensitive.");
+                Environment.Exit(1);
             }
 
-            if(!File.Exists(argsDic["ConfigFile"]))
+            if(!File.Exists(configFilePath))
             {
-                Console.WriteLine("Config files not found");
+                Console.WriteLine("Error: Cannot find config file \"{0}\"", configFilePath);
+                Environment.Exit(2);
             }
             
-            var clientInfo = new ClientInfo(argsDic["ConfigFile"]);
+            var clientInfo = new ClientInfo(configFilePath);
             var clientId = "Client-ID " + clientInfo.ClientId;
 
-            if(argsDic.ContainsKey("Backup"))
+            if(!BackupArchive(clientInfo.BackupLocation, clientInfo.WallpaperFolder))
             {
-                if (argsDic["Backup"] == clientInfo.WallpaperFolder)
-                {
-                    Console.WriteLine("Cannot zip to the same folder you're zipping from!");
-                    return -1;
-                }
-
-                if(!Directory.Exists(argsDic["Backup"]))
-                {
-                    Console.WriteLine("{0} directory does not exist.", argsDic["Backup"]);
-                    return -1;
-                }
-
-                //Utils.DeleteOldArchives(argsDic["Backup"]);
-                Utils.BackupImages(clientInfo.WallpaperFolder, argsDic["Backup"]);
+                Console.WriteLine("Error: Could not archive existing images.");
+                Console.WriteLine("Either the target archive directory does not exist");
+                Console.WriteLine("or you're trying to zip a folder into itself.");
+                Environment.Exit(3);
             }
 
-            var links = Utils.FetchImageUrls(clientId, clientInfo.GetSubredditEnumerator(),
+            var imageLinks = Utils.FetchImageUrls(clientId, clientInfo.GetSubredditEnumerator(),
                 clientInfo.NumberOfImages, clientInfo.ScreenWidth, clientInfo.ScreenHeight);
 
-            var bytes = Utils.DownloadImages(links);
+            var imageBytes = Utils.DownloadImages(imageLinks);
 
-            int imageCount = 0;
+            var imageCount = 0;
 
-            foreach (var byteArray in bytes)
+            foreach (var byteArray in imageBytes)
             {
                 imageCount++;
                 var name = String.Format("file{0}.jpg", imageCount);
@@ -65,6 +57,18 @@ namespace WallpaperGrabber
             return 0;
         }
 
+        private static bool BackupArchive(string backupDir, string wallpaperDir)
+        {
+            if (!Directory.Exists(backupDir) || backupDir == wallpaperDir)
+                return false;
+
+            if(!String.IsNullOrEmpty(backupDir))
+                Utils.BackupImages(wallpaperDir, backupDir);
+
+            Utils.DeleteFiles(wallpaperDir);
+            return true;
+        }
+
         // Windows OS' pre-7 do not have slideshow desktop background functionality!
         private static bool CheckOperatingSystemIsValid()
         {
@@ -72,20 +76,17 @@ namespace WallpaperGrabber
                 && Environment.OSVersion.Version.Minor > 0);
         }
 
-        private static Dictionary<string, string> SplitArgs(string[] args)
+        private static string GetConfigPath(string[] args)
         {
-            var argsDictionary = new Dictionary<string, string>();
+            if (args.Length != 2)
+                return "";
 
-            for(int i = 0; i < args.Length; i++)
-            {
-                if (i % 2 == 0)
-                {
-                    var key = args[i].Substring(1, args[i].Length - 1);
-                    argsDictionary[key] = args[i + 1];
-                }
-            }
+            var configFile = Array.IndexOf(args, "-ConfigFile");
 
-            return argsDictionary;
+            if (configFile == -1)
+                return "";
+
+            return args[++configFile];
         }
     }
 }
