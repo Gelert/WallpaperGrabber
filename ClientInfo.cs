@@ -45,6 +45,7 @@ namespace WallpaperGrabber
             ScreenHeight = int.Parse(config.GetElementsByTagName("ScreenHeight")[0].InnerText);
 
             var backupLocation = config.GetElementsByTagName("BackupDirectory");
+
             BackupLocation = backupLocation.Count > 0
                 ? backupLocation[0].InnerText
                 : "";

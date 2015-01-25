@@ -11,8 +11,6 @@ namespace WallpaperGrabber
 {
     public static class Utils
     {
-        private const string Tag = "wallpaper_grabber_";
-
         public static IEnumerable<string> FetchImageUrls(string clientId,  IEnumerator<string> subreddit, 
             int imageCount, int screenWidth, int screenHeight)
         {
@@ -93,19 +91,21 @@ namespace WallpaperGrabber
             Console.WriteLine("Archiving old images...");
 
             var archiveName = 
-                String.Format(@"{0}\{1}{2}.zip", targetDirectory, Tag, DateTime.Now.Ticks);
+                String.Format("{0}\\wallpaper_grabber_{1}.zip", targetDirectory, DateTime.Now.Ticks);
 
             ZipFile.CreateFromDirectory(wallpaperDirectory, archiveName);
         }
 
-        public static void SaveImageAsJpg(byte[] pixelData, string wallpaperLocation, string fileName)
+        public static void SaveImageAsJpg(byte[] pixelData, string wallpaperLocation)
         {
+            var fileName = 
+                String.Format("{0}\\image_{1}.jpg", wallpaperLocation, DateTime.Now.Ticks);
+
             using (var memStream = new MemoryStream(pixelData))
             {
-                string saveLocation = wallpaperLocation + fileName; 
                 var image = Image.FromStream(memStream);
-                Console.WriteLine("Saving {0}", saveLocation);
-                image.Save(saveLocation);
+                Console.WriteLine("Saving {0}", fileName);
+                image.Save(fileName);
             }
         }
 
@@ -113,7 +113,7 @@ namespace WallpaperGrabber
         {
             var archiveFolder = new DirectoryInfo(targetDirectory);
 
-            archiveFolder.GetFiles(String.Format("{0}*.zip", Tag))
+            archiveFolder.GetFiles()
                 .Where(f => f.CreationTime > DateTime.Now.AddDays(-7))
                 .ToList()
                 .ForEach(f => File.Delete(f.FullName));                

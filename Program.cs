@@ -45,14 +45,8 @@ namespace WallpaperGrabber
 
             var imageBytes = Utils.DownloadImages(imageLinks);
 
-            var imageCount = 0;
-
             foreach (var byteArray in imageBytes)
-            {
-                imageCount++;
-                var name = String.Format("file{0}.jpg", imageCount);
-                Utils.SaveImageAsJpg(byteArray, clientInfo.WallpaperFolder, name);
-            }
+                Utils.SaveImageAsJpg(byteArray, clientInfo.WallpaperFolder);
 
             return 0;
         }
