@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 
 namespace WallpaperGrabber
@@ -10,7 +10,7 @@ namespace WallpaperGrabber
         {
             if(!CheckOperatingSystemIsValid())
             {
-                Console.WriteLine("OS needs to be of version Windows 7 or later.");
+                Console.WriteLine("OS needs to be Windows 7 or later.");
                 return -1;
             }
 
@@ -40,6 +40,9 @@ namespace WallpaperGrabber
                 Environment.Exit(3);
             }
 
+
+            var stopWatch = Stopwatch.StartNew();
+
             var imageLinks = Utils.FetchImageUrls(clientId, clientInfo.GetSubredditEnumerator(),
                 clientInfo.NumberOfImages, clientInfo.ScreenWidth, clientInfo.ScreenHeight);
 
@@ -47,6 +50,11 @@ namespace WallpaperGrabber
 
             foreach (var byteArray in imageBytes)
                 Utils.SaveImageAsJpg(byteArray, clientInfo.WallpaperFolder);
+
+            stopWatch.Stop();
+
+            Console.WriteLine("Time taken: {0} seconds", 
+                stopWatch.ElapsedMilliseconds/1000);
 
             return 0;
         }
@@ -63,7 +71,11 @@ namespace WallpaperGrabber
             return true;
         }
 
-        // Windows OS' pre-7 do not have slideshow desktop background functionality!
+        /// <summary>
+        /// Windows operating systems before Windows 7 do not have
+        /// Slideshow Desktop Background functionality.
+        /// </summary>
+        /// <returns></returns>
         private static bool CheckOperatingSystemIsValid()
         {
             return (Environment.OSVersion.Version.Major >= 6
@@ -72,15 +84,11 @@ namespace WallpaperGrabber
 
         private static string GetConfigPath(string[] args)
         {
-            if (args.Length != 2)
-                return "";
-
             var configFile = Array.IndexOf(args, "-ConfigFile");
 
-            if (configFile == -1)
-                return "";
-
-            return args[++configFile];
+            return configFile == -1
+                ? string.Empty 
+                : args[++configFile];
         }
     }
 }
