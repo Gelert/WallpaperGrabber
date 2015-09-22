@@ -36,7 +36,8 @@
 ehthumbs.db
 Thumbs.db
 
-#VS
+# Visual Studio files #
+#######################
 [Oo]bj/
 [Bb]in/
 .nuget/
