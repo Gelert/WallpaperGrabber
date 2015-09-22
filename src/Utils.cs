@@ -11,43 +11,50 @@ namespace WallpaperGrabber
 {
     public static class Utils
     {
-        public static IEnumerable<string> FetchImageUrls(string clientId,  IEnumerator<string> subreddit, 
-            int imageCount, int screenWidth, int screenHeight)
+        private const string IMGUR_AUTH = "Authorization";
+
+        public static IEnumerable<string> FetchImageUrls(string clientId,  
+                                                         IEnumerable<string> subreddits, 
+                                                         int imageCount, 
+                                                         int screenWidth, 
+                                                         int screenHeight)
         {
             var links = new List<string>();
             try
             {
-                while (subreddit.MoveNext())
+                foreach (var subreddit in subreddits)
                 {
-                    var webRequest = (HttpWebRequest)WebRequest.Create(subreddit.Current);
-                    webRequest.Headers.Add("Authorization", clientId);
+                    var webRequest = (HttpWebRequest)WebRequest.Create(subreddit);
+                    webRequest.Headers.Add(IMGUR_AUTH, clientId);
                     using (var response = webRequest.GetResponse().GetResponseStream())
+                    using (var reader = new StreamReader(response))
                     {
-                        using (var reader = new StreamReader(response))
-                        {
-                            var imageUrls = 
-                                GetImageUrls(reader.ReadToEnd(), imageCount, screenWidth, screenHeight);
+                        var imageUrls = GetImageUrls(reader.ReadToEnd(),
+                                                     imageCount,
+                                                     screenWidth,
+                                                     screenHeight);
 
-                            foreach (var url in imageUrls)
-                                links.Add(url);
-                        }
+                        foreach (var url in imageUrls)
+                            links.Add(url);
                     }
                 }
             }
-            catch(WebException we)
+            catch (WebException e)
             {
-                Console.WriteLine(we);
+                Console.WriteLine(e);
             }
-            catch(ArgumentNullException ane)
+            catch (ArgumentNullException e)
             {
-                Console.WriteLine(ane);
+                Console.WriteLine(e);
             }
             
             return links;
         }
 
-        private static IEnumerable<string> GetImageUrls(string rawJson, int imageCount,
-            int screenWidth, int screenHeight)
+        private static IEnumerable<string> GetImageUrls(string rawJson, 
+                                                        int imageCount,
+                                                        int screenWidth, 
+                                                        int screenHeight)
         {
             dynamic parsedJson = JsonConvert.DeserializeObject(rawJson);
             var count = 0;

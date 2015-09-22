@@ -6,57 +6,58 @@ namespace WallpaperGrabber
 {
     public class Program
     {
-        public static int Main(string[] args)
+        private const string CONFIG_FILE_ARG = "-ConfigFile";
+
+        public static void Main(string[] args)
         {
             if(!CheckOperatingSystemIsValid())
             {
                 Console.WriteLine("OS needs to be Windows 7 or later.");
-                return -1;
+                return;
             }
 
             var configFilePath = GetConfigPath(args);
 
             if(String.IsNullOrEmpty(configFilePath))
             {
-                Console.WriteLine(@"Usage: wallpapergrabber.exe -ConfigFile C:\Users\User\Desktop\Folder");
-                Console.WriteLine("Command line switches are case sensitive.");
-                Environment.Exit(1);
+                Console.WriteLine(@"Usage: wallpapergrabber.exe -ConfigFile C:\Users\Folder\Config.xml");
+                return;
             }
 
             if(!File.Exists(configFilePath))
             {
-                Console.WriteLine("Error: Cannot find config file \"{0}\"", configFilePath);
-                Environment.Exit(2);
+                Console.WriteLine("Error: Cannot find config file \"{0}\".", configFilePath);
+                return;
             }
-            
-            var clientInfo = new ClientInfo(configFilePath);
-            var clientId = "Client-ID " + clientInfo.ClientId;
 
-            if(!BackupArchive(clientInfo.BackupLocation, clientInfo.WallpaperFolder))
+            var configFile = new ConfigFile(configFilePath, true);
+            configFile.ReadConfig();
+            var clientId = "Client-ID " + configFile.ClientId;
+
+            if(!BackupArchive(configFile.BackupLocation, configFile.WallpaperFolder))
             {
                 Console.WriteLine("Error: Could not archive existing images.");
                 Console.WriteLine("Either the target archive directory does not exist");
                 Console.WriteLine("or you're trying to zip a folder into itself.");
-                Environment.Exit(3);
             }
 
 
             var stopWatch = Stopwatch.StartNew();
-
-            var imageLinks = Utils.FetchImageUrls(clientId, clientInfo.GetSubredditEnumerator(),
-                clientInfo.NumberOfImages, clientInfo.ScreenWidth, clientInfo.ScreenHeight);
+            var imageLinks = Utils.FetchImageUrls(clientId, 
+                                                  configFile.Subreddits,
+                                                  configFile.NumberOfImages, 
+                                                  configFile.ScreenWidth, 
+                                                  configFile.ScreenHeight);
 
             var imageBytes = Utils.DownloadImages(imageLinks);
 
             foreach (var byteArray in imageBytes)
-                Utils.SaveImageAsJpg(byteArray, clientInfo.WallpaperFolder);
+                Utils.SaveImageAsJpg(byteArray, configFile.WallpaperFolder);
 
             stopWatch.Stop();
 
-            Console.WriteLine("Time taken: {0} seconds", 
-                stopWatch.ElapsedMilliseconds/1000);
-
-            return 0;
+            Console.WriteLine("Time taken: {0} seconds",
+                stopWatch.ElapsedMilliseconds / 1000);
         }
 
         private static bool BackupArchive(string backupDir, string wallpaperDir)
@@ -71,24 +72,27 @@ namespace WallpaperGrabber
             return true;
         }
 
-        /// <summary>
-        /// Windows operating systems before Windows 7 do not have
-        /// Slideshow Desktop Background functionality.
-        /// </summary>
-        /// <returns></returns>
-        private static bool CheckOperatingSystemIsValid()
-        {
-            return (Environment.OSVersion.Version.Major >= 6
-                && Environment.OSVersion.Version.Minor > 0);
-        }
-
         private static string GetConfigPath(string[] args)
         {
-            var configFile = Array.IndexOf(args, "-ConfigFile");
+            var configFile = Array.IndexOf(args, CONFIG_FILE_ARG);
 
             return configFile == -1
                 ? string.Empty 
                 : args[++configFile];
+        }
+
+        /// <summary>
+        /// Windows operating systems before Windows 7 do not have
+        /// Slideshow Desktop Background functionality.
+        /// </summary>
+        /// <returns>
+        ///     true if the Operating System is Windows 7 or later,
+        ///     false otherwise.
+        /// </returns>
+        private static bool CheckOperatingSystemIsValid()
+        {
+            return (Environment.OSVersion.Version.Major >= 6
+                && Environment.OSVersion.Version.Minor > 0);
         }
     }
 }
